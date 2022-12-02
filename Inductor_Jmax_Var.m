@@ -21,7 +21,7 @@ Target.J_min = 100e4;       % Min current density - A/m^2
 Target.J_max = 450e4;       % Max current density - A/m^2
 Target.AWG_eq_max = 20;     % Max equivalent AWG of windings
 
-Param.RCu = 1.72e-8;        % Annealed copper resistance - Ohm/m
+Param.RCu = 1.72e-8;        % Annealed copper resistance - Ohm.m
 Param.kh = 40;              % Hysteresis losses constant - W*s*(T^-2.4)/m^3
 Param.kf = 4e-5;            % Foucault losses constant - W*s*(T^-2.4)/m^3
 
@@ -46,8 +46,8 @@ fprintf("Step 1 - Loading cores database... ");
 
 % Load core data
 try
-    Table_Cores = readtable('Cores_New.xlsx', 'Sheet', 1, 'TreatAsMissing', {'' '.' 'NA' 'NaN'});
-    Table_Cores.Properties.VariableNames = ["Name", "AeAw", "Ae", "Aw", "le", "lt", "Ve", "Datasheet"];
+    Table_Cores = readtable('Cores_New.xlsx', 'Sheet', 1, 'TreatAsEmpty', {'' '.'});
+    Table_Cores.Properties.VariableNames = {'Name', 'AeAw', 'Ae', 'Aw', 'le', 'lt', 'Ve', 'Datasheet'};
     Table_Cores.Name = string(Table_Cores.Name);    % String
     Table_Cores.AeAw = Table_Cores.AeAw * 1e-12;    % m^4    
     Table_Cores.Ae = Table_Cores.Ae * 1e-6;         % m^2
@@ -81,8 +81,8 @@ fprintf("Step 2 - Loading wires database... ");
 
 % Load wire data
 try
-    Table_Wires = readtable('Wires_new.xlsx', 'Sheet', 1, 'TreatAsMissing', {'' '.' 'NA' 'NaN'});
-    Table_Wires.Properties.VariableNames = ["AWG", "S_Cu", "S_Total"];
+    Table_Wires = readtable('Wires_new.xlsx', 'Sheet', 1, 'TreatAsEmpty', {'' '.'});
+    Table_Wires.Properties.VariableNames = {'AWG', 'S_Cu', 'S_Total'};
 catch
     fprintf("\n\t Error loading file. Aborting");
     return;
@@ -94,7 +94,7 @@ Table_Wires = sortrows(Table_Wires, Temp_Idx, 'descend');
 
 % Remove entries with no AWG info
 Temp_Idx = (Table_Wires.AWG(:) == 0);
-if (sum(Temp_Idx, 'all') ~= 0)
+if (sum(Temp_Idx) ~= 0)
     Table_Wires(Temp_Idx, :) = [];
 end
 
@@ -192,7 +192,7 @@ if (sum(Temp_Idx, 'all') ~= 0)
     Res_Wires(Temp_Idx, :) = [];
 end
 
-% Find number os parallel wires with no valid configuration
+% Find number of parallel wires with no valid configuration
 Temp_Idx = all(isnan(Res_J), 1);
 
 % Remove invalids from result
@@ -391,8 +391,9 @@ for Idx_Cfg = 1:Temp_Idx_Max
     % Selected configuration is valid
     if (~isnan(Res_kw(Idx_Core, Idx_Turns, Idx_Wire, Idx_Cond)))    
         % Calculate losses
-        Res_P_Wire(Idx_Core, Idx_Turns, Idx_Wire, Idx_Cond) = (Param.RCu * Res_Turns(Idx_Turns) * Res_Cores.lt(Idx_Core))/(Res_Wires.S_Cu(Idx_Wire)*Res_Cond(Idx_Cond))*Target.I_rms^2;
+        Res_P_Wire(Idx_Core, Idx_Turns, Idx_Wire, Idx_Cond) = ((Param.RCu * Res_Turns(Idx_Turns) * Res_Cores.lt(Idx_Core))/(Res_Wires.S_Cu(Idx_Wire)*Res_Cond(Idx_Cond)))*Target.I_rms^2;
         Res_P_Core(Idx_Core, Idx_Turns, Idx_Wire, Idx_Cond) = (Res_Bpk(Idx_Core, Idx_Turns)^2.4)*(Param.kh * Target.f + Param.kf *Target.f)*Res_Cores.Ve(Idx_Core);
+        %Res_P_Core(Idx_Core) = (500)*Res_Cores.Ve(Idx_Core);
     end
 end
 
@@ -578,7 +579,7 @@ for Idx_Core = 1:numel(Res_Cores.Name)
     subplot(Temp_Rows, Temp_Columns, Temp_Plot_Space(Idx_Core));
     hold on;
     grid on;
-    xlabel('Turns');
+    xlabel('Core Volume (m^3)');
     ylabel('Losses (W)'); 
     title (Res_Cores.Name(Idx_Core));
 
@@ -591,14 +592,14 @@ for Idx_Core = 1:numel(Res_Cores.Name)
             Temp_Label(Idx_Cfg) = sprintf("%d x AWG %d", Res_Cond(Idx_Cond), Res_Wires.AWG(Idx_Wire));
             
             % Configuration has only one valid turn count - Put a marker
-            if (sum(~isnan(Res_kw(Idx_Core, :, Idx_Wire, Idx_Cond)), 'all') == 1)
-                Temp_Marker = '-o';
-            else
-                Temp_Marker = '-';
-            end
+%             if (sum(~isnan(Res_kw(Idx_Core, :, Idx_Wire, Idx_Cond)), 'all') == 1)
+%                 Temp_Marker = '-o';
+%             else
+%                 Temp_Marker = '-';
+%             end
             
             % Plot line
-            Temp_h = plot (Res_Turns, Res_P_Total(Idx_Core, :, Idx_Wire, Idx_Cond), Temp_Marker, 'DisplayName', Temp_Label(Idx_Cfg));
+            Temp_h = plot (Res_Cores, Res_P_Total(Idx_Core, :, Idx_Wire, Idx_Cond), Temp_Marker, 'DisplayName', Temp_Label(Idx_Cfg));
 
             % Add data tip to line
             Temp_h.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Trace',repmat({Temp_h.DisplayName},size(Temp_h.XData)));
@@ -630,7 +631,7 @@ set(Temp_hFig, 'units', 'normalized', 'InnerPosition',[0 0 1 1]);
 sgtitle (sprintf ("Best core: %s", Res_Cores.Name(Idx_Core)));
 hold on;
 grid on;
-xlabel('Turns');
+xlabel('Core Volume (m^3)');
 ylabel('Total losses (W)'); 
 
 % Plot result for all windings of each core

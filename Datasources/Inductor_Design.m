@@ -180,11 +180,13 @@ function Result = Inductor_Design(Target)
     %% Losses
 
     Configurations_Dimensions = [size(Valid_Cores.Name, 2), size(Valid_Turns, 2), size(Valid_Wires.AWG, 2)];
-    Configurations_Max = prod(Configurations_Dimensions);
+    Configurations_Max = prod(Configurations_Dimensions);    
+    Config_especial = [size(Valid_Cores.Name,2)];
 
     % Preallocate matrices to receive the results
     P_Wire = ones(Configurations_Dimensions)*NaN;
     P_Core = ones(Configurations_Dimensions)*NaN;
+    Perda_Core = ones(Config_especial)*NaN;
 
     % Calculate losses for each configuration
     for Idx_Cfg = 1:Configurations_Max
@@ -195,7 +197,8 @@ function Result = Inductor_Design(Target)
         if (~isnan(kw_req(Idx_Core, Idx_Turns, Idx_Wire)))    
             % Calculate losses
             P_Wire(Idx_Core, Idx_Turns, Idx_Wire) = (Param.RCu * Valid_Turns(Idx_Turns) * Valid_Cores.lt(Idx_Core))/(Valid_Wires.Cond(Idx_Wire)*Valid_Wires.S_Cu(Idx_Wire))*Target.I_rms^2;
-            P_Core(Idx_Core, Idx_Turns, Idx_Wire) = (Bpk(Idx_Core, Idx_Turns)^2.4)*(Param.kh * Target.f + Param.kf *Target.f)*Valid_Cores.Ve(Idx_Core);
+            %P_Core(Idx_Core, Idx_Turns, Idx_Wire) = (Bpk(Idx_Core, Idx_Turns)^2.4)*(Param.kh * Target.f + Param.kf *Target.f)*Valid_Cores.Ve(Idx_Core);
+            Perda_Core(Config_especial) = 500*Valid_Cores.Ve(Idx_Core);
         end
     end
 
@@ -215,7 +218,8 @@ function Result = Inductor_Design(Target)
     Result.AWG = Valid_Wires.AWG(Idx_Wire);
     Result.kw = kw_req(Idx_Core, Idx_Turns, Idx_Wire);
     Result.Pw = P_Wire(Idx_Core, Idx_Turns, Idx_Wire);
-    Result.Pc = P_Core(Idx_Core, Idx_Turns, Idx_Wire);
+    Result.Pcore = Perda_Core(Config_especial);
+    %Result.Pc = P_Core(Idx_Core, Idx_Turns, Idx_Wire);
     Result.Pt = Min_Losses;
 
     % Clear data
