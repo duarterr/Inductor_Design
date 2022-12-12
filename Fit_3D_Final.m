@@ -3,6 +3,81 @@ clc;
 close all;
 addpath('Datasources');
 
+%% Importação dos dados das curvas do datasheet
+
+load Data_25mT.mat
+load Data_50mT.mat
+load Data_100mT.mat
+load Data_200mT.mat
+load Data_300mT.mat
+
+%% Ajuste dos pontos 
+
+% Eixo x = Frequência
+x_escalalog = logspace(1,3,100000);
+x_escalalin = linspace(10,1000,100000);
+
+% Eixo y = Perdas volumétricas
+y_escalalog = logspace(-1,4,100000);
+y_escalalin = linspace(0.1,10000,100000);
+
+% Interpolação dos pontos - *1000 para obter em Hz e W/m3
+x25 = interp1(x_escalalin',x_escalalog',Data_25mT(:,1))*1000;
+y25 = interp1(y_escalalin',y_escalalog',Data_25mT(:,2))*1000;
+
+x50 = interp1(x_escalalin',x_escalalog',Data_50mT(:,1))*1000;
+y50 = interp1(y_escalalin',y_escalalog',Data_50mT(:,2))*1000;
+
+x100 = interp1(x_escalalin',x_escalalog',Data_100mT(:,1))*1000;
+y100 = interp1(y_escalalin',y_escalalog',Data_100mT(:,2))*1000;
+
+x200 = interp1(x_escalalin',x_escalalog',Data_200mT(:,1))*1000;
+y200 = interp1(y_escalalin',y_escalalog',Data_200mT(:,2))*1000;
+
+x300 = interp1(x_escalalin',x_escalalog',Data_300mT(:,1))*1000;
+y300 = interp1(y_escalalin',y_escalalog',Data_300mT(:,2))*1000;
+
+clear x_escalalog x_escalalin y_escalalog y_escalalin;
+
+%%
+
+figure;
+hold on;
+grid on;
+plot (x25,y25);
+plot (x50,y50);
+plot (x100,y100);
+plot (x200,y200);
+plot (x300,y300);
+set(gca, 'XScale', 'log');
+set(gca, 'YScale', 'log');
+%xlim([10^1 10^3]);
+%ylim([10^-1 10^4]); 
+legend ({'25mT', '50mT', '100mT', '200mT', '300mT'});
+
+%% Fit: '25mT'.
+
+% Set up fittype and options.
+ft = fittype( 'k*f^a*0.025^b', 'independent', 'f', 'dependent', 'P' );
+opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
+opts.Display = 'Off';
+%opts.StartPoint = [0.14399839834894 0.73773725496228 0.694828622975817];
+
+% Fit model to data.
+[fitresult, ~] = fit( x25, y25, ft, opts );
+
+% Plot fit with data.
+figure( 'Name', '25mT' );
+h = plot( fitresult, x25, y25 );
+legend( h, 'P vs. f', '25mT', 'Location', 'NorthEast', 'Interpreter', 'none' );
+% Label axes
+xlabel( 'f', 'Interpreter', 'none' );
+ylabel( 'P', 'Interpreter', 'none' );
+set(gca, 'XScale', 'log');
+set(gca, 'YScale', 'log');
+grid on
+
+
 %% Parâmetros do conversor
 
 Vin = 400;                       % V
@@ -25,15 +100,15 @@ load Data_25mT
 % Eixo x = Frequência
 x_escalalog = logspace(1,3,100000);
 x_escalalin = linspace(10,1000,100000);
-x1 = interp1(x_escalalin',x_escalalog',Data_25mT(:,1));
+x25 = interp1(x_escalalin',x_escalalog',Data_25mT(:,1));
 
 % Eixo y = Perdas volumétricas
 y_escalalog = logspace(-1,4,100000);
 y_escalalin = linspace(0.1,10000,100000);
-y1 = interp1(y_escalalin',y_escalalog',Data_25mT(:,2));
+y25 = interp1(y_escalalin',y_escalalog',Data_25mT(:,2));
 
 % Fit Curve
-[xData1, yData1] = prepareCurveData( x1, y1 );
+[xData1, yData1] = prepareCurveData( x25, y25 );
 
 % Set up fittype and options.
 ft1 = fittype( 'k*x^a*0.025^b', 'independent', 'x', 'dependent', 'y' );
@@ -185,20 +260,20 @@ k5 = r5(3);
 
 % Plot 5 Interpolações
 figure()
-h1 = plot( fitresult1, 'b' );
+h1 = plot( fitresult1, 'c', xData1, yData1 );
 hold on;
-h2 = plot( fitresult2, xData2, yData2 );
+h2 = plot( fitresult2, 'y', xData2, yData2 );
 hold on;
-h3 = plot( fitresult3, xData3, yData3 );
+h3 = plot( fitresult3, 'r', xData3, yData3 );
 hold on;
-h4 = plot( fitresult4, xData4, yData4 );
+h4 = plot( fitresult4, 'b', xData4, yData4 );
 hold on;
-h5 = plot( fitresult5, xData5, yData5 );
+h5 = plot( fitresult5, 'g', xData5, yData5 );
 grid on;
 xlabel ('Frequency (kHz)');
 ylabel ('Volumetric Losses (kW/m^3)');
 title ('Volumetric Losses X Frequency - N97');
-legend([''],[''])
+legend(['Data - 25mT'],['Curve - 25mT'],['Data - 50mT'],['Curve - 50mT'],['Data - 100mT'],['Curve - 100mT'],['Data - 200mT'],['Curve - 200mT'],['Data - 300mT'],['Curve - 300mT'])
 %legend('Curve B = 50mT', 'Interpolation', 'Curve B = 200mT', 'Interpolation', 'Curve B = 100mT', 'Interpolation' );
 
 %% Fit Curve 
@@ -268,5 +343,6 @@ ylabel( 'Magnetic Flux (T)' );
 zlabel( 'Volumetric Losses (kW/m^3)' );
 grid on
 view( -33.9, 13.6 );
+set(gca, 'XScale', 'log');
 
 

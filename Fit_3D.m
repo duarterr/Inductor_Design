@@ -268,5 +268,6 @@ ylabel( 'Magnetic Flux (T)' );
 zlabel( 'Volumetric Losses (kW/m^3)' );
 grid on
 view( -33.9, 13.6 );
+set(gca, 'XScale', 'log');
 
 
