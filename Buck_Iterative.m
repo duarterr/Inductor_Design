@@ -169,7 +169,7 @@ for Idx_Freq = 1:numel(Param.Fsw_Range)
 
     % Free wheeling switch currents - Channel conduction
     Temp_I_Sfwc = zeros (size(Temp_t));
-    Temp_Interval = logical((Temp_t >= (Param.D_min*Param.Tsw_Range(Idx_Freq) + Drv.Td)).*(Temp_t < (Param.Tsw_Range(Idx_Freq) - Drv.Td)));
+    Temp_Interval = logical((Temp_t >=(Param.D_min*Param.Tsw_Range(Idx_Freq) + Drv.Td)).*(Temp_t < (Param.Tsw_Range(Idx_Freq) - Drv.Td)));
     Temp_I_Sfwc(Temp_Interval) = Temp_I_L(Temp_Interval);  
     Temp_I_Sfwc_rms = rms(Temp_I_Sfwc);
     
@@ -229,7 +229,7 @@ for Idx_Freq = 1:numel(Param.Fsw_Range)
     Res_Pt(Idx_Freq) = Res_P_Lt(Idx_Freq) + Res_P_Smt(Idx_Freq) + Res_P_Sfwt(Idx_Freq) + Res_P_Aux(Idx_Freq);
     
     % Efficiency
-    Res_Efficiency(Idx_Freq) = (Param.Po - Res_Pt(Idx_Freq))/Param.Po;
+    Res_Efficiency(Idx_Freq) = Param.Po/(Param.Po + Res_Pt(Idx_Freq));
 end
 
 % Clear data

@@ -7,8 +7,8 @@ clc;
 
 Target.L = 550e-6;      % Inductance - H
 Target.f = 100e3;       % Frequency - Hz
-Target.I_rms = 2;    % RMS current - A
-Target.I_pk = 3;     % Max current - A
+Target.I_rms = 2;       % RMS current - A
+Target.I_pk = 3;        % Max current - A
 Target.kw_min = 0.00;	% Max window utilization factor - Unitless
 Target.kw_max = 0.70;	% Max window utilization factor - Unitless
 Target.B_min = 0.00;	% Min peak flux density - T

@@ -1,4 +1,5 @@
 function Result = Inductor_Design(Target)
+    
     % Datasources - Persistent to speedup calculations
     persistent Cores;
     persistent Wires; 
@@ -38,8 +39,8 @@ function Result = Inductor_Design(Target)
     %% Constant parameters
     
     Param.RCu = 1.72e-8;	% Annealed copper resistance - Ohm/m
-    Param.kh = 40;          % Hysteresis losses constant - W*s*(T^-2.4)/m^3
-    Param.kf = 4e-5;        % Foucault losses constant - W*s*(T^-2.4)/m^3
+    %Param.kh = 40;          % Hysteresis losses constant - W*s*(T^-2.4)/m^3
+    %Param.kf = 4e-5;        % Foucault losses constant - W*s*(T^-2.4)/m^3
     Param.Turns = 5:500;    % Number of turns to be considered
 
     %% Wire section selection
@@ -69,7 +70,7 @@ function Result = Inductor_Design(Target)
         Label_Windind(Idx_Wire) = sprintf("%d x AWG %d", Valid_Wires.Cond(Idx_Wire), Valid_Wires.AWG(Idx_Wire));
     end
 
-    % Crear data
+    % Clear data
     clear S_Cu_min S_skin Valid_S Idx_Wire;
 
     %% Number of turns selection
@@ -118,7 +119,7 @@ function Result = Inductor_Design(Target)
     Valid_Cores.lt = Cores.lt(~Invalid_Cores);
     Valid_Cores.Ve = Cores.Ve(~Invalid_Cores);
 
-    % Crear data
+    % Clear data
     clear Configurations_Dimensions Configurations_Max Idx_Cfg Idx_Core Idx_Turns B;
     clear Invalid_Turns Invalid_Cores;
 
@@ -174,18 +175,20 @@ function Result = Inductor_Design(Target)
         end
     end
 
-    % Crear data
+    % Clear data
     clear Configurations_Dimensions Configurations_Max Aw_min kw;
 
     %% Losses
 
     Configurations_Dimensions = [size(Valid_Cores.Name, 2), size(Valid_Turns, 2), size(Valid_Wires.AWG, 2)];
-    Configurations_Max = prod(Configurations_Dimensions);
-
+    Configurations_Max = prod(Configurations_Dimensions);    
+   
     % Preallocate matrices to receive the results
     P_Wire = ones(Configurations_Dimensions)*NaN;
     P_Core = ones(Configurations_Dimensions)*NaN;
-
+    VL_Core = vpa(Volumetric_Losses(Target));
+    P_Total = ones(Configurations_Dimensions)*NaN;
+    
     % Calculate losses for each configuration
     for Idx_Cfg = 1:Configurations_Max
         % Get indexes
@@ -195,14 +198,17 @@ function Result = Inductor_Design(Target)
         if (~isnan(kw_req(Idx_Core, Idx_Turns, Idx_Wire)))    
             % Calculate losses
             P_Wire(Idx_Core, Idx_Turns, Idx_Wire) = (Param.RCu * Valid_Turns(Idx_Turns) * Valid_Cores.lt(Idx_Core))/(Valid_Wires.Cond(Idx_Wire)*Valid_Wires.S_Cu(Idx_Wire))*Target.I_rms^2;
-            P_Core(Idx_Core, Idx_Turns, Idx_Wire) = (Bpk(Idx_Core, Idx_Turns)^2.4)*(Param.kh * Target.f + Param.kf *Target.f)*Valid_Cores.Ve(Idx_Core);
+            P_Core(Idx_Core) = VL_Core*Valid_Cores.Ve(Idx_Core);
+            
         end
+        % Total losses
+        % P_Total(Idx_Cfg) = P_Wire(Idx_Core, Idx_Turns, Idx_Wire) + P_Core(Idx_Core);
     end
 
     % Total losses
-    P_Total = P_Wire + P_Core;
+    %P_Total = P_Wire + P_Core;
 
-    % Crear data
+    % Clear data
     clear Configurations_Dimensions Configurations_Max Idx_Core Idx_Turns Idx_Wire;
     
     %%
@@ -215,7 +221,7 @@ function Result = Inductor_Design(Target)
     Result.AWG = Valid_Wires.AWG(Idx_Wire);
     Result.kw = kw_req(Idx_Core, Idx_Turns, Idx_Wire);
     Result.Pw = P_Wire(Idx_Core, Idx_Turns, Idx_Wire);
-    Result.Pc = P_Core(Idx_Core, Idx_Turns, Idx_Wire);
+    Result.Pcore = P_Core(Idx_Core);
     Result.Pt = Min_Losses;
 
     % Clear data
