@@ -9,11 +9,11 @@ addpath('Datasources');
 
 %% Inductor parameters
 
-Target.L = 350e-6;          % Inductance - H
-Target.fmin = 100e3;         % Minimum frequency - Hz (For losses calculation)
-Target.fmax = 250e3;        % Maximum frequency - Hz (For wire calculation)
-Target.I_rms = 1.3;         % RMS current - A
-Target.I_pk = 3.15;          % Max current - A
+Target.L = 550e-6;          % Inductance - H
+Target.fmin = 21e3;         % Minimum frequency - Hz (For losses calculation)
+Target.fmax = 100e3;        % Maximum frequency - Hz (For wire calculation)
+Target.I_rms = 2;         % RMS current - A
+Target.I_pk = 3;          % Max current - A
 Target.kw_min = 0.50;       % Max window utilization factor - Unitless
 Target.kw_max = 0.70;       % Max window utilization factor - Unitless
 Target.B_min = 0.20;        % Min peak flux density - T
