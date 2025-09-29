@@ -9,26 +9,25 @@ addpath('Datasources');
 
 %% Inductor parameters
 
-Target.L = 550e-6;          % Inductance - H
-Target.fmin = 21e3;         % Minimum frequency - Hz (For losses calculation)
-Target.fmax = 100e3;        % Maximum frequency - Hz (For wire calculation)
-Target.I_rms = 2;         % RMS current - A
-Target.I_pk = 3;          % Max current - A
-Target.kw_min = 0.50;       % Max window utilization factor - Unitless
-Target.kw_max = 0.70;       % Max window utilization factor - Unitless
+Target.L = 260e-6;          % Inductance - H
+Target.freq = 100e3;        % Frequency - Hz
+Target.I_rms = 1.46;        % RMS current - A
+Target.I_pk = 3.57;         % Max current - A
+Target.kw_min = 0.65;       % Max window utilization factor - Unitless
+Target.kw_max = 0.75;       % Max window utilization factor - Unitless
 Target.B_min = 0.20;        % Min peak flux density - T
-Target.B_max = 0.35;        % Max peak flux density - T
-Target.J_min = 100e4;       % Min current density - A/m^2
-Target.J_max = 450e4;       % Max current density - A/m^2
+Target.B_max = 0.30;        % Max peak flux density - T
+Target.J_min = 300e4;       % Min current density - A/m^2
+Target.J_max = 550e4;       % Max current density - A/m^2
 
-Param.Standard_Wire = 0;    % Use only wire data from catalog (no custom strands)
+Param.Standard_Wire = 1;    % Use only wire data from catalog (no custom strands)
 
 Param.kh = 40;              % Hysteresis losses constant - W*s*(T^-2.4)/m^3
 Param.kf = 4e-5;            % Foucault losses constant - W*s*(T^-2.4)/m^3
 
 % Print message
 fprintf("Inductor parameters: \n");
-fprintf("\t L: %.2fuH @ %.2fkHz \n", Target.L/1e-6, Target.fmin/1e3);
+fprintf("\t L: %.2fuH @ %.2fkHz \n", Target.L/1e-6, Target.freq/1e3);
 fprintf("\t Irms: %.2fA, Ipk: %.2fA \n", Target.I_rms, Target.I_pk);
 fprintf("\t kW between %d%% and %d%% \n", Target.kw_min*100, Target.kw_max*100);
 fprintf("\t Bmax between %.2fT and %.2fT @ Ipk \n", Target.B_min, Target.B_max);
@@ -108,7 +107,7 @@ else
 end
 
 % Skin effect penetration
-Temp_S_skin = pi*(7.5e-2^2)/Target.fmax;
+Temp_S_skin = pi*(7.5e-2^2)/Target.freq;
 
 % Find all wires that can be used due to skin effect
 Temp_Idx = (Res_Wires.S_Cu./Res_Wires.Strands) <= Temp_S_skin;
@@ -313,7 +312,7 @@ for Idx_Cfg = 1:Temp_Idx_Max
     if (~isnan(Res_kw(Idx_Core, Idx_Turns, Idx_Wire)))    
         % Calculate losses
         Res_P_Wire(Idx_Core, Idx_Turns, Idx_Wire) = (Res_Turns(Idx_Turns) * Res_Cores.lt(Idx_Core) * Res_Wires.Ohm_m(Idx_Wire))*Target.I_rms^2;
-        Res_P_Core(Idx_Core, Idx_Turns, Idx_Wire) = (Res_Bpk(Idx_Core, Idx_Turns)^2.4)*(Param.kh * Target.fmin + Param.kf *Target.fmin)*Res_Cores.Ve(Idx_Core);
+        Res_P_Core(Idx_Core, Idx_Turns, Idx_Wire) = (Res_Bpk(Idx_Core, Idx_Turns)^2.4)*(Param.kh * Target.freq + Param.kf *Target.freq)*Res_Cores.Ve(Idx_Core);
     end
 end
 
